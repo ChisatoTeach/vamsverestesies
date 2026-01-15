@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 El último deseo del guardián - Escape Room ELE</title>
+    <style>
+        /* 🎨 ESTILOS CSS - Diseño Místico y Antiguo */
+        :root {
+            --color-bg-main: #1a1a2e; /* Azul oscuro fondo */
+            --color-bg-secondary: #16213e; /* Azul más claro para paneles */
+            --color-accent: #ffd700; /* Dorado para destacar */
+            --color-text: #e0e0e0; /* Texto claro */
+            --color-error: #ff6b6b;
+            --color-success: #51cf66;
+            --font-title: 'Georgia', serif;
+            --font-body: 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--color-bg-main);
+            color: var(--color-text);
+            margin: 0;
+            padding: 20px;
+            background-image: url('https://www.transparenttextures.com/patterns/aged-paper.png'); /* Textura sutil de papel viejo */
+        }
+
+        /* Contenedor principal que centra todo */
+        #game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--color-bg-secondary);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid var(--color-accent);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+        }
+
+        h1, h2, h3 {
+            font-family: var(--font-title);
+            color: var(--color-accent);
+            text-align: center;
+        }
+
+        /* HUD - Barra superior de estado */
+        #hud {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.3);
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--color-accent);
+            font-weight: bold;
+        }
+
+        /* Estilos de las habitaciones/secciones */
+        .room-section {
+            display: none; /* Ocultas por defecto */
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .room-section.active {
+            display: block; /* Solo la activa se muestra */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Estilos de elementos interactivos */
+        .narrative-box {
+            background: rgba(255, 215, 0, 0.1);
+            padding: 15px;
+            border-left: 4px solid var(--color-accent);
+            margin-bottom: 25px;
+            font-style: italic;
+        }
+
+        .puzzle-container {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], select {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid var(--color-accent);
+            background: var(--color-bg-main);
+            color: var(--color-text);
+            font-size: 1em;
+            width: 100%;
+            box-sizing: border-box; /* Para que el padding no afecte el ancho */
+            margin-bottom: 10px;
+        }
+
+        /* Botones estilo rúnico */
+        .btn-rune {
+            background: linear-gradient(45deg, #b8860b, var(--color-accent));
+            border: none;
+            color: var(--color-bg-main);
+            padding: 12px 24px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: block;
+            margin: 20px auto;
+            font-family: var(--font-title);
+        }
+
+        .btn-rune:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--color-accent);
+        }
+
+        .btn-hint {
+            background: #4a4a4a;
+            color: #ccc;
+            padding: 8px 15px;
+            font-size: 0.9em;
+            border: 1px solid #ccc;
+        }
+        
+        /* Feedback visual */
+        #feedback-area {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            display: none; /* Oculto por defecto */
+        }
+        .feedback-success { background-color: rgba(81, 207, 102, 0.2); border: 1px solid var(--color-success); color: var(--color-success); }
+        .feedback-error { background-color: rgba(255, 107, 107, 0.2); border: 1px solid var(--color-error); color: var(--color-error); }
+
+        /* Pistas */
+        .hint-box {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            margin-top: 10px;
+            border-left: 3px solid #ccc;
+            display: none;
+            font-size: 0.9em;
+        }
+
+        /* Estilos específicos para la sala de arrastrar/emparejar (Sala 4) */
+        .matching-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .match-item {
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--color-accent);
+            cursor: pointer;
+            text-align: center;
+        }
+        .match-item.selected { background: var(--color-accent); color: var(--color-bg-main); }
+        .match-item.matched { background: var(--color-success); opacity: 0.5; pointer-events: none; }
+
+        /* Guía del profesor al final */
+        .teacher-guide {
+            background: #f0f0f0;
+            color: #333;
+            padding: 20px;
+            margin-top: 40px;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+        .teacher-guide h2 { color: #333; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+
+    <div id="hud">
+        <span>Puntos: <span id="score-display">0</span> 🏆</span>
+        <span>Progreso: Sala <span id="room-display">0</span>/5 🗺️</span>
+    </div>
+    
+    <section id="intro-screen" class="room-section active">
+        <h1>🔐 El último deseo del guardián</h1>
+        <div class="narrative-box">
+            <p>Has entrado en el Santuario Lingüístico. El aire es antiguo y huele a pergamino. Frente a ti, una figura etérea parpadea, perdiendo fuerza: es el Guardián del Idioma.</p>
+            <p><em>"Aprendiz... mi tiempo se acaba. El conocimiento del Subjuntivo se perderá si no superas las 5 pruebas. Solo quien sabe expresar deseos, dudas y emociones puede heredar mi poder. ¿Aceptas el reto?"</em></p>
+        </div>
+        <button class="btn-rune" onclick="startGame()">Aceptar el reto y entrar</button>
+    </section>
+
+    <section id="room-1" class="room-section">
+        <h2>Sala 1: La Cámara de los Susurros</h2>
+        <div class="narrative-box">
+            <p>Las paredes susurran antiguos deseos incompletos. Para abrir la puerta, debes completar los deseos del Guardián para imponer su voluntad sobre otros.</p>
+            <p><strong>Regla:</strong> Cuando un sujeto quiere algo de *otro* sujeto distinto, usamos Subjuntivo.</p>
+        </div>
+
+        <div class="puzzle-container">
+            <p>1. El Guardián está cansado. Él quiere que tú ______ (descansar) un poco también.</p>
+            <select id="r1-q1">
+                <option value="">-- Selecciona --</option>
+                <option value="descansas">descansas (Indicativo)</option>
+                <option value="descansar">descansar (Infinitivo)</option>
+                <option value="descanses">descanses (Subjuntivo)</option>
+            </select>
+
+            <p>2. Es necesario que la puerta ______ (abrirse) ahora mismo.</p>
+            <select id="r1-q2">
+                <option value="">-- Selecciona --</option>
+                <option value="se abre">se abre (Indicativo)</option>
+                <option value="abrirse">abrirse (Infinitivo)</option>
+                <option value="se abra">se abra (Subjuntivo)</option>
+            </select>
+        </div>
+
+        <button class="btn-rune btn-hint" onclick="showHint(1)">💡 Pedir una pista (-3 puntos)</button>
+        <div id="r1-hint-box" class="hint-box"></div>
+
+        <button class="btn-rune" onclick="checkRoom1()">Probar conjuro</button>
+    </section>
+
+
+    <section id="room-2" class="room-section">
+        <h2>Sala 2: La Niebla de la Incertidumbre</h2>
+        <div class="narrative-box">
+            <p>Una niebla espesa cubre el suelo. Aquí nada es seguro. Debes discernir entre la realidad (Indicativo) y la duda o negación (Subjuntivo).</p>
+            <p><strong>Regla:</strong> Si negamos la realidad ("No creo que...", "Dudo que...") o expresamos probabilidad incierta, la niebla invoca al Subjuntivo.</p>
+        </div>
+
+        <div class="puzzle-container">
+            <p>Escribe la forma correcta del verbo entre paréntesis:</p>
+            
+            <p>1. El Guardián cree que el camino <strong>es</strong> (ser) peligroso, pero yo NO creo que ______ (ser) tan difícil.</p>
+            <input type="text" id="r2-q1" data-correct="sea" placeholder="Escribe el verbo aquí...">
+
+            <p>2. Es verdad que hoy hace frío, pero es posible que mañana ______ (hacer) calor.</p>
+            <input type="text" id="r2-q2" data-correct="haga" placeholder="Escribe el verbo aquí...">
+        </div>
+
+        <button class="btn-rune btn-hint" onclick="showHint(2)">💡 Pedir una pista (-3 puntos)</button>
+        <div id="r2-hint-box" class="hint-box"></div>
+
+        <button class="btn-rune" onclick="checkRoom2()">Disipar la niebla</button>
+    </section>
+
+
+    <section id="room-3" class="room-section">
+        <h2>Sala 3: El Corazón del Santuario</h2>
+        <div class="narrative-box">
+            <p>El santuario reacciona a tus sentimientos. Las estatuas lloran o ríen. Para avanzar, debes conectar tu emoción con la acción que la provoca.</p>
+            <p><strong>Regla:</strong> Verbos como "gustar, molestar, alegrar, sentir" disparan el subjuntivo si el sujeto cambia.</p>
+        </div>
+
+        <div class="puzzle-container">
+            <p>Completa las reacciones emocionales:</p>
+            
+            <p>1. ¡Qué bien! Me alegra mucho que tú ______ (estar) aquí para ayudarme.</p>
+            <input type="text" id="r3-q1" data-correct="estés" placeholder="...">
+
+            <p>2. Es una lástima que el antiguo Guardián ______ (desaparecer) tan pronto.</p>
+            <input type="text" id="r3-q2" data-correct="desaparezca" placeholder="...">
+        </div>
+
+        <button class="btn-rune btn-hint" onclick="showHint(3)">💡 Pedir una pista (-3 puntos)</button>
+        <div id="r3-hint-box" class="hint-box"></div>
+
+        <button class="btn-rune" onclick="checkRoom3()">Calmar el santuario</button>
+    </section>
+
+
+    <section id="room-4" class="room-section">
+        <h2>Sala 4: El Puente del Propósito</h2>
+        <div class="narrative-box">
+            <p>Hay un abismo frente a ti. Debes construir un puente conectando acciones con su finalidad para poder cruzar.</p>
+            <p><strong>Regla:</strong> Usamos "para que" o "a fin de que" seguido de subjuntivo para expresar el propósito de una acción cuando el sujeto cambia.</p>
+            <p><em>Instrucciones: Haz clic en un inicio de frase (izquierda) y luego en su final correcto (derecha).</em></p>
+        </div>
+
+        <div class="puzzle-container matching-grid" id="matching-game-container">
+            <div class="match-item left" data-match="1">Te doy esta llave antigua PARA QUE...</div>
+            <div class="match-item left" data-match="2">El Guardián explica las reglas A FIN DE QUE...</div>
+            <div class="match-item left" data-match="3">Bajamos la voz PARA QUE los monstruos...</div>
+
+            <div class="match-item right" data-match="3">...no nos OIGAN.</div>
+            <div class="match-item right" data-match="1">...ABRAS el cofre mágico.</div>
+            <div class="match-item right" data-match="2">...COMPRENDAMOS la misión.</div>
+        </div>
+
+        <button class="btn-rune btn-hint" onclick="showHint(4)">💡 Pedir una pista (-3 puntos)</button>
+        <div id="r4-hint-box" class="hint-box"></div>
+
+        <button class="btn-rune" id="btn-check-r4" style="display:none;" onclick="checkRoom4()">Cruzar el puente</button>
+    </section>
+
+
+    <section id="room-5" class="room-section">
+        <h2>Sala Final: El Último Deseo del Guardián</h2>
+        <div class="narrative-box">
+            <p>Has llegado al núcleo. El Guardián está casi transparente. Te entrega un pergamino final con su último deseo. Debes completarlo correctamente para que su magia se libere y puedas escapar con el conocimiento.</p>
+        </div>
+
+        <div class="puzzle-container" style="line-height: 2em;">
+            <p>"Aprendiz, mi último deseo es que este santuario no se pierda en el olvido. Es vital que tú ______ (1. proteger) estos libros. No creo que ______ (2. haber) una misión más importante. Te he enseñado todo esto para que ______ (3. ser) el nuevo Guardián. ¡Ojalá ______ (4. tener - tú) suerte en tu viaje!"</p>
+            
+            <input type="text" id="r5-q1" data-correct="protejas" placeholder="1. (proteger)">
+            <input type="text" id="r5-q2" data-correct="haya" placeholder="2. (haber)">
+            <input type="text" id="r5-q3" data-correct="seas" placeholder="3. (ser)">
+            <input type="text" id="r5-q4" data-correct="tengas" placeholder="4. (tener)">
+        </div>
+
+        <button class="btn-rune btn-hint" onclick="showHint(5)">💡 Pedir una pista (-3 puntos)</button>
+        <div id="r5-hint-box" class="hint-box"></div>
+
+        <button class="btn-rune" onclick="checkRoom5()">Sellar el pacto y escapar</button>
+    </section>
+
+
+    <section id="final-screen" class="room-section">
+        <h1 id="end-title"></h1>
+        <div class="narrative-box" id="end-message"></div>
+        
+        <div class="puzzle-container" style="text-align: center;">
+            <h3>Puntuación Final: <span id="final-score" style="color: var(--color-accent); font-size: 1.5em;"></span> / 125</h3>
+            <p id="evaluation-message"></p>
+        </div>
+
+        <div class="teacher-guide">
+            <h2>🧑‍🏫 Guía Didáctica para el Profesor</h2>
+            <p><strong>Objetivo:</strong> Repasar y consolidar el uso del presente de subjuntivo en contextos de influencia, duda, emoción y finalidad (Nivel B1/B2).</p>
+            <p><strong>Cómo usar este recurso:</strong></p>
+            <ul>
+                <li><strong>Clase Virtual (Zoom/Meet):</strong> Comparte tu pantalla y pide a los estudiantes que resuelvan los enigmas juntos. Un estudiante puede ser el "portavoz" y tú haces clic por ellos, o puedes enviarles el archivo HTML para que lo hagan individualmente y compartan sus resultados.</li>
+                <li><strong>Clase Presencial:</strong> Si tienen dispositivos (tablets/móviles), envíales el archivo. Pueden trabajar en parejas para fomentar la discusión gramatical antes de responder. Si hay proyector, hazlo como una actividad grupal competitiva.</li>
+                <li><strong>Tarea (Flipped Classroom):</strong> Envíales el archivo como deberes antes del examen de subjuntivo para que practiquen de forma autónoma.</li>
+            </ul>
+            <p><strong>Personalización:</strong> Puedes abrir este archivo HTML con cualquier editor de texto (Bloc de notas, VS Code) y buscar los comentarios con emojis (📝) para cambiar las preguntas, las respuestas correctas o los textos narrativos para adaptarlos al vocabulario de tu grupo.</p>
+        </div>
+    </section>
+
+
+    <div id="feedback-area"></div>
+
+</div> <script>
+    // VARIABLES DE ESTADO DEL JUEGO
+    let score = 0;
+    let currentRoomNum = 0;
+    const totalRooms = 5;
+    // Estado de la sala actual para controlar puntos
+    let roomState = {
+        attempts: 0,
+        hintsUsed: 0,
+        bonusActive: true
+    };
+
+    // Base de datos de pistas (📝 EDITA LAS PISTAS AQUÍ)
+    const hintsDB = {
+        1: [
+            "Pista 1: Busca el cambio de sujeto. 'Yo quiero' + 'que' + 'TÚ...'",
+            "Pista 2: Recuerda que es una influencia o petición, no una realidad segura. No uses el indicativo."
+        ],
+        2: [
+            "Pista 1: 'No creo que' introduce duda. ¿Qué modo usamos para la incertidumbre?",
+            "Pista 2: 'Es posible que' no asegura nada. Necesitas el subjuntivo de los verbos."
+        ],
+        3: [
+            "Pista 1: Es una reacción emocional ante la acción de *otra* persona.",
+            "Pista 2: Busca el verbo que expresa el sentimiento ('alegra', 'lástima') y mira quién hace la acción que sigue."
+        ],
+        4: [
+            "Pista 1: Los conectores 'para que' o 'a fin de que' siempre disparan el subjuntivo si el sujeto cambia.",
+            "Pista 2: Piensa: ¿Cuál es el objetivo de la primera acción?"
+        ],
+        5: [
+            "Pista 1: Repasa: 'Es vital que' (influencia impersonal), 'No creo que' (duda).",
+            "Pista 2: Repasa: 'Para que' (finalidad) y 'Ojalá' (el deseo por excelencia)."
+        ]
+    };
+
+    // FUNCIONES DE UTILIDAD ⚙️
+
+    // Muestra una sección y oculta las demás
+    function showSection(sectionId) {
+        const sections = document.querySelectorAll('.room-section');
+        sections.forEach(sec => sec.classList.remove('active'));
+        document.getElementById(sectionId).classList.add('active');
+        
+        // Limpiar feedback y resetear estado de sala
+        hideFeedback();
+        resetRoomState();
+        
+        // Actualizar HUD
+        if(sectionId.startsWith('room-')) {
+            currentRoomNum = parseInt(sectionId.split('-')[1]);
+            document.getElementById('room-display').textContent = currentRoomNum;
+        }
+        updateHUD();
+
+        // Inicializar juego de emparejar si es la sala 4
+        if (currentRoomNum === 4) { initializeMatchingGame(); }
+    }
+
+    function updateHUD() {
+        document.getElementById('score-display').textContent = score;
+    }
+
+    function resetRoomState() {
+        roomState = { attempts: 0, hintsUsed: 0, bonusActive: true };
+        const hintBoxes = document.querySelectorAll('.hint-box');
+        hintBoxes.forEach(box => { box.style.display = 'none'; box.textContent = ''; });
+    }
+
+    // Sistema de feedback visual
+    function showFeedback(message, type) {
+        const feedbackArea = document.getElementById('feedback-area');
+        feedbackArea.textContent = message;
+        feedbackArea.className = type === 'success' ? 'feedback-success' : 'feedback-error';
+        feedbackArea.style.display = 'block';
+    }
+    function hideFeedback() {
+        document.getElementById('feedback-area').style.display = 'none';
+    }
+
+    // Sistema de puntuación
+    function calculatePointsForRoom(isCorrect) {
+        if (!isCorrect) {
+            score = Math.max(0, score - 2); // Resta 2, mínimo 0
+            updateHUD();
+            return false;
+        }
+        // Si es correcto
+        let pointsToAdd = 0;
+        if (roomState.attempts === 0) pointsToAdd = 10;
+        else if (roomState.attempts === 1) pointsToAdd = 5;
+        // Si son más intentos, 0 puntos por respuesta base.
+
+        // Bonus si no usó pistas
+        if (roomState.hintsUsed === 0 && roomState.bonusActive) {
+            pointsToAdd += 5;
+        }
+        score += pointsToAdd;
+        updateHUD();
+        return true;
+    }
+
+    // Sistema de pistas
+    function showHint(roomId) {
+        const hintBox = document.getElementById(`r${roomId}-hint-box`);
+        if (roomState.hintsUsed < 2) {
+            hintBox.innerHTML += `<p>${hintsDB[roomId][roomState.hintsUsed]}</p>`;
+            hintBox.style.display = 'block';
+            roomState.hintsUsed++;
+            score = Math.max(0, score - 3); // Resta 3 puntos por pista
+            roomState.bonusActive = false; // Pierde el bonus
+            updateHUD();
+        } else {
+            showFeedback("Ya has usado todas las pistas disponibles para esta sala.", "error");
+        }
+    }
+
+    // INICIO DEL JUEGO
+    function startGame() {
+        score = 0;
+        showSection('room-1');
+    }
+
+    // LÓGICA DE VALIDACIÓN DE SALAS 🧠
+
+    // --- SALA 1: Select ---
+    function checkRoom1() {
+        const a1 = document.getElementById('r1-q1').value;
+        const a2 = document.getElementById('r1-q2').value;
+
+        if (a1 === "" || a2 === "") { showFeedback("Por favor, responde a todas las preguntas.", "error"); return; }
+
+        // Respuestas correctas harcoded aquí para los select
+        if (a1 === "descanses" && a2 === "se abra") {
+            calculatePointsForRoom(true);
+            showFeedback("¡Correcto! El Guardián siente que su voluntad se cumple. La puerta se abre.", "success");
+            setTimeout(() => showSection('room-2'), 2000);
+        } else {
+            calculatePointsForRoom(false);
+            let errorMsg = "Algo no está bien. ";
+            if(a1 !== "descanses") errorMsg += "¿Revisaste el cambio de sujeto en la primera frase? ";
+            if(a2 !== "se abra") errorMsg += "En la segunda, es una necesidad impersonal que afecta a 'la puerta'.";
+            showFeedback(errorMsg + " Inténtalo de nuevo (-2 puntos).", "error");
+            roomState.attempts++;
+        }
+    }
+
+    // --- SALA 2: Inputs de texto ---
+    function checkRoom2() {
+        // Usamos una función auxiliar para validar inputs de texto basados en data-correct
+        if(validateTextInputs(['r2-q1', 'r2-q2'])) {
+             showFeedback("¡Excelente! Has disipado la niebla de la duda. Avanzas.", "success");
+             setTimeout(() => showSection('room-3'), 2000);
+        }
+    }
+
+    // --- SALA 3: Inputs de texto ---
+    function checkRoom3() {
+         if(validateTextInputs(['r3-q1', 'r3-q2'])) {
+             showFeedback("¡Bien hecho! El santuario siente tu empatía y se calma. El camino está libre.", "success");
+             setTimeout(() => showSection('room-4'), 2000);
+        }
+    }
+
+    // Función auxiliar para validar inputs de texto (usada en Sala 2, 3 y 5)
+    function validateTextInputs(inputIds) {
+        let allCorrect = true;
+        let anyEmpty = false;
+
+        inputIds.forEach(id => {
+             const input = document.getElementById(id);
+             if(input.value.trim() === "") anyEmpty = true;
+        });
+
+        if (anyEmpty) { showFeedback("Por favor, completa todos los campos.", "error"); return false; }
+
+        inputIds.forEach(id => {
+             const input = document.getElementById(id);
+             const correctAnswer = input.getAttribute('data-correct').toLowerCase();
+             if(input.value.trim().toLowerCase() !== correctAnswer) {
+                 allCorrect = false;
+                 input.style.border = "2px solid var(--color-error)"; // Resaltar error
+             } else {
+                 input.style.border = "2px solid var(--color-success)"; // Resaltar acierto
+             }
+        });
+
+        if (allCorrect) {
+            calculatePointsForRoom(true);
+            return true;
+        } else {
+            calculatePointsForRoom(false);
+            showFeedback("Algunas formas verbales no son correctas. Revisa si es subjuntivo o indicativo y la conjugación. (-2 puntos)", "error");
+            roomState.attempts++;
+            return false;
+        }
+    }
+
+    // --- SALA 4: Lógica del juego de emparejar ---
+    let selectedLeft = null;
+    let matchesMade = 0;
+
+    function initializeMatchingGame() {
+        matchesMade = 0;
+        selectedLeft = null;
+        document.getElementById('btn-check-r4').style.display = 'none';
+        const items = document.querySelectorAll('.match-item');
+        items.forEach(item => {
+            item.classList.remove('selected', 'matched');
+            item.style.opacity = "1";
+            item.style.pointerEvents = "auto";
+            item.onclick = handleMatchClick;
+        });
+        shuffleRightColumn();
+    }
+
+    function handleMatchClick(e) {
+        const clickedItem = e.target;
+        if(clickedItem.classList.contains('matched')) return;
+
+        if(clickedItem.classList.contains('left')) {
+            // Si ya había uno seleccionado, quitar selección
+            if(selectedLeft) selectedLeft.classList.remove('selected');
+            selectedLeft = clickedItem;
+            selectedLeft.classList.add('selected');
+        } else if (clickedItem.classList.contains('right') && selectedLeft) {
+            // Intentar emparejar
+            const idLeft = selectedLeft.getAttribute('data-match');
+            const idRight = clickedItem.getAttribute('data-match');
+            
+            if(idLeft === idRight) {
+                // Match correcto
+                selectedLeft.classList.remove('selected');
+                selectedLeft.classList.add('matched');
+                clickedItem.classList.add('matched');
+                selectedLeft = null;
+                matchesMade++;
+                if(matchesMade === 3) { // Número total de parejas
+                     document.getElementById('btn-check-r4').style.display = 'block';
+                     showFeedback("¡Puente completado! Ya puedes cruzar.", "success");
+                }
+            } else {
+                // Match incorrecto
+                showFeedback("Esa conexión no tiene sentido. Inténtalo de nuevo. (-2 puntos)", "error");
+                calculatePointsForRoom(false);
+                selectedLeft.classList.remove('selected');
+                selectedLeft = null;
+                roomState.attempts++;
+            }
+        }
+    }
+
+    function shuffleRightColumn() {
+        const container = document.getElementById('matching-game-container');
+        const rightItems = Array.from(container.querySelectorAll('.match-item.right'));
+        rightItems.forEach(item => container.removeChild(item)); // Quitarlos
+        // Fisher-Yates shuffle simple
+        for (let i = rightItems.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [rightItems[i], rightItems[j]] = [rightItems[j], rightItems[i]];
+        }
+        rightItems.forEach(item => container.appendChild(item)); // Volver a añadirlos desordenados
+    }
+
+    function checkRoom4() {
+        calculatePointsForRoom(true); // Dar los puntos base de la sala al completarla
+        showSection('room-5');
+    }
+
+    // --- SALA 5: Sala Final ---
+    function checkRoom5() {
+         if(validateTextInputs(['r5-q1', 'r5-q2', 'r5-q3', 'r5-q4'])) {
+             endGame();
+        }
+    }
+
+    // FIN DEL JUEGO Y EVALUACIÓN 🏆
+    function endGame() {
+        showSection('final-screen');
+        document.getElementById('hud').style.display = 'none'; // Ocultar HUD
+        document.getElementById('final-score').textContent = score;
+
+        const title = document.getElementById('end-title');
+        const message = document.getElementById('end-message');
+        const evalMsg = document.getElementById('evaluation-message');
+
+        // Condición de victoria: Completar todas las salas (ya hecho si están aquí) Y tener >= 70 puntos.
+        if (score >= 70) {
+            title.textContent = "🎉 ¡ENHORABUENA, NUEVO GUARDIÁN! 🎉";
+            message.innerHTML = "<p>El espíritu del Guardián sonríe y se desvanece en paz. Has demostrado un dominio excelente del Subjuntivo. El conocimiento del santuario es tuyo y has logrado escapar.</p>";
+            evalMsg.textContent = "Desempeño Lingüístico: EXCELENTE (Nivel B2 consolidado). Has manejado con precisión los diferentes usos del subjuntivo.";
+            document.getElementById('game-container').style.borderColor = var(--color-success);
+        } else {
+            title.textContent = "🚪 Escapaste... pero a un alto precio.";
+            message.innerHTML = "<p>Lograste salir del santuario, pero el Guardián te miró con tristeza antes de desaparecer. Tu control sobre el subjuntivo aún es débil y mucho conocimiento se ha perdido.</p>";
+            evalMsg.textContent = "Desempeño Lingüístico: NECESITA MEJORA (Nivel B1 en proceso). Has completado las pruebas, pero has cometido muchos errores o dependido demasiado de las pistas. Sigue practicando.";
+             document.getElementById('game-container').style.borderColor = var(--color-error);
+        }
+    }
+
+</script>
+
+</body>
+</html>
